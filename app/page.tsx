@@ -268,9 +268,11 @@ export default function Home() {
                 <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
                   {/* Product Image Area */}
                   <div className="relative bg-white aspect-square flex items-center justify-center p-6">
-                    <svg className="w-24 h-24 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                    <img 
+                      src="/image/goal.png" 
+                      alt={product.name}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   
                   {/* Product Info */}
@@ -331,9 +333,11 @@ export default function Home() {
                 {/* Product Image */}
                 <div className="flex flex-col items-center">
                   <div className="bg-white border-2 border-gray-200 rounded-2xl w-64 h-64 flex items-center justify-center p-6 mb-3">
-                    <svg className="w-32 h-32 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                    <img 
+                      src="/image/goal.png" 
+                      alt={products.find(p => p.id === selectedProduct)?.name}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   <div className="grid grid-cols-4 gap-2 w-64">
                     {[1,2,3,4].map((i) => (
