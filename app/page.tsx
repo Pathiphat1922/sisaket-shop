@@ -1,65 +1,111 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function ProductPage() {
+  const router = useRouter();
+  const [selectedShirtType, setSelectedShirtType] = useState<'screen' | 'mourning'>('screen');
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({
+    SSS: 0, SS: 0, S: 0, M: 0, L: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0, '5XL': 0, '6XL': 0, '7XL': 0,
+  });
+
+  const handleQuantityChange = (size: string, delta: number) => {
+    setQuantities(prevQuantities => ({
+      ...prevQuantities,
+      [size]: Math.max(0, prevQuantities[size] + delta),
+    }));
+  };
+
+  const sizes = ['SSS', 'SS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL'];
+
+  const handleSubmit = () => {
+    const selectedItems = Object.entries(quantities)
+      .filter(([, quantity]) => quantity > 0)
+      .map(([size, quantity]) => ({
+        type: selectedShirtType === 'screen' ? 'เสื้อสกรีน' : 'เสื้อไว้ทุกข์',
+        size: size,
+        quantity: quantity,
+      }));
+
+    if (selectedItems.length === 0) {
+      alert("กรุณาเลือกสินค้าอย่างน้อย 1 ชิ้นครับ");
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cart_items", JSON.stringify(selectedItems));
+      localStorage.setItem("selected_shirt_type", selectedShirtType);
+    }
+
+    alert("เพิ่มสินค้าลงตะกร้าแล้ว! กรุณากรอกข้อมูลจัดส่งครับ");
+    router.push("/review");
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto bg-white shadow-lg rounded-xl my-8">
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">
+        เลือกสินค้าที่ต้องการ
+      </h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        
+        {/* เสื้อสกรีน */}
+        <div
+          className={`border-2 p-4 rounded-lg text-center cursor-pointer transition-all duration-200 
+            ${selectedShirtType === 'screen' ? 'border-blue-500 shadow-md' : 'border-gray-300 hover:border-blue-300'}`}
+          onClick={() => setSelectedShirtType('screen')}
+        >
+          {/* VVVV แก้ไขเป็น .PNG (ตัวพิมพ์ใหญ่) VVVV */}
+          <img src="/images/goal.PNG" alt="เสื้อสกรีน" className="w-full h-48 object-contain mb-2 rounded-md" /> 
+          <h2 className="font-semibold text-lg text-gray-800">เสื้อสกรีน</h2>
+          <p className="text-sm text-gray-600">แบบเสื้อสกรีน</p>
+          {selectedShirtType === 'screen' && <div className="mt-2 text-blue-500 font-bold">✔ เลือกแล้ว</div>}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* เสื้อไว้ทุกข์ */}
+        <div
+          className={`border-2 p-4 rounded-lg text-center cursor-pointer transition-all duration-200 
+            ${selectedShirtType === 'mourning' ? 'border-blue-500 shadow-md' : 'border-gray-300 hover:border-blue-300'}`}
+          onClick={() => setSelectedShirtType('mourning')}
+        >
+          {/* VVVV แก้ไขเป็น .PNG (ตัวพิมพ์ใหญ่) VVVV */}
+          <img src="/images/black.PNG" alt="เสื้อไว้ทุกข์" className="w-full h-48 object-contain mb-2 rounded-md" />
+          <h2 className="font-semibold text-lg text-gray-800">เสื้อไว้ทุกข์</h2>
+          <p className="text-sm text-gray-600">แบบไว้ทุกข์ (สีดำลายเทา)</p>
+          {selectedShirtType === 'mourning' && <div className="mt-2 text-blue-500 font-bold">✔ เลือกแล้ว</div>}
         </div>
-      </main>
+      </div>
+
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6">
+        เลือกขนาดและระบุจำนวน
+      </h2>
+      
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {sizes.map((size) => (
+          <div key={size} className="border p-4 rounded-lg shadow-sm bg-gray-50 flex flex-col justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">{size}</h3>
+            <div className="flex justify-between items-center w-full max-w-[120px]">
+              <button 
+                onClick={() => handleQuantityChange(size, -1)}
+                className="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-lg hover:bg-red-600 active:bg-red-700 transition-colors"
+              >-</button>
+              <span className="text-xl font-bold w-12 text-center">{quantities[size]}</span>
+              <button 
+                onClick={() => handleQuantityChange(size, 1)}
+                className="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-lg hover:bg-green-600 active:bg-green-700 transition-colors"
+              >+</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={handleSubmit}
+        className="mt-10 w-full bg-blue-600 text-white py-3 rounded-lg text-xl font-semibold hover:bg-blue-700 transition-colors shadow-md"
+      >
+        ดำเนินการต่อ (ไปหน้ากรอกข้อมูล)
+      </button>
     </div>
   );
 }
