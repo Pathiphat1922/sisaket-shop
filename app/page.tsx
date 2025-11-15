@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -495,6 +496,8 @@ export default function Home() {
         </div>
       </footer>
 =======
+=======
+>>>>>>> 31aeea5c451423be26e7a9dd071da5513363f63a
 "use client";
 
 import { useState } from 'react';
@@ -553,7 +556,7 @@ export default function ProductPage() {
             ${selectedShirtType === 'screen' ? 'border-blue-500 shadow-md' : 'border-gray-300 hover:border-blue-300'}`}
           onClick={() => setSelectedShirtType('screen')}
         >
-          {/* VVVV แก้ไขเป็น .PNG (ตัวพิมพ์ใหญ่) VVVV */}
+          {/* ใช้ goal.PNG (ตัวพิมพ์ใหญ่) */}
           <img src="/images/goal.PNG" alt="เสื้อสกรีน" className="w-full h-48 object-contain mb-2 rounded-md" /> 
           <h2 className="font-semibold text-lg text-gray-800">เสื้อสกรีน</h2>
           <p className="text-sm text-gray-600">แบบเสื้อสกรีน</p>
@@ -566,7 +569,7 @@ export default function ProductPage() {
             ${selectedShirtType === 'mourning' ? 'border-blue-500 shadow-md' : 'border-gray-300 hover:border-blue-300'}`}
           onClick={() => setSelectedShirtType('mourning')}
         >
-          {/* VVVV แก้ไขเป็น .PNG (ตัวพิมพ์ใหญ่) VVVV */}
+          {/* ใช้ black.PNG (ตัวพิมพ์ใหญ่) */}
           <img src="/images/black.PNG" alt="เสื้อไว้ทุกข์" className="w-full h-48 object-contain mb-2 rounded-md" />
           <h2 className="font-semibold text-lg text-gray-800">เสื้อไว้ทุกข์</h2>
           <p className="text-sm text-gray-600">แบบไว้ทุกข์ (สีดำลายเทา)</p>
@@ -603,7 +606,10 @@ export default function ProductPage() {
       >
         ดำเนินการต่อ (ไปหน้ากรอกข้อมูล)
       </button>
+<<<<<<< HEAD
 >>>>>>> Future/order
+=======
+>>>>>>> 31aeea5c451423be26e7a9dd071da5513363f63a
     </div>
   );
 }
