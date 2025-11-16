@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const router = useRouter();
   const fontStyle = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif'
   };
@@ -146,7 +148,10 @@ export default function Home() {
             <a href="#about" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'about')}>เกี่ยวกับ</a>
             <a href="#contact" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'contact')}>ติดต่อ</a>
           </div>
-          <button className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition">
+          <button 
+            onClick={() => router.push('/review')}
+            className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition"
+          >
             ซื้อเลย
           </button>
         </div>
@@ -268,11 +273,9 @@ export default function Home() {
                 <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
                   {/* Product Image Area */}
                   <div className="relative bg-white aspect-square flex items-center justify-center p-6">
-                    <img 
-                      src="/image/goal.PNG" 
-                      alt={product.name}
-                      className="w-full h-full object-contain"
-                    />
+                    <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+                      <span className="text-gray-400 text-sm">รูปสินค้า</span>
+                    </div>
                   </div>
                   
                   {/* Product Info */}
@@ -327,17 +330,15 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Content - No Scroll */}
+            {/* Content */}
             <div className="p-6">
               <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
                 {/* Product Image */}
                 <div className="flex flex-col items-center">
                   <div className="bg-white border-2 border-gray-200 rounded-2xl w-64 h-64 flex items-center justify-center p-6 mb-3">
-                    <img 
-                      src="/image/goal.png" 
-                      alt={products.find(p => p.id === selectedProduct)?.name}
-                      className="w-full h-full object-contain"
-                    />
+                    <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+                      <span className="text-gray-400">รูปสินค้า</span>
+                    </div>
                   </div>
                   <div className="grid grid-cols-4 gap-2 w-64">
                     {[1,2,3,4].map((i) => (
@@ -420,7 +421,10 @@ export default function Home() {
                   </div>
                   
                   {/* Add to Cart */}
-                  <button className="w-full bg-blue-600 text-white py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition transform hover:scale-[1.02] shadow-lg mt-auto">
+                  <button 
+                    onClick={() => router.push('/review')}
+                    className="w-full bg-blue-600 text-white py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition transform hover:scale-[1.02] shadow-lg mt-auto"
+                  >
                     เพิ่มลงตะกร้า - ฿{products.find(p => p.id === selectedProduct)?.price}
                   </button>
                 </div>
