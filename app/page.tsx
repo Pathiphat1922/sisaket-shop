@@ -11,6 +11,7 @@ export default function Home() {
   const [selectedColor, setSelectedColor] = useState('white');
   const [selectedSize, setSelectedSize] = useState('M');
   const [isClosing, setIsClosing] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -34,6 +35,7 @@ export default function Home() {
     setTimeout(() => {
       setSelectedProduct(null);
       setIsClosing(false);
+      setSelectedImage(0);
     }, 300);
   };
 
@@ -49,18 +51,22 @@ export default function Home() {
   const products = [
     {
       id: 1,
-      name: 'เสื้อเฉลิมฉลอง Edition',
-      price: '890',
+      name: 'เสื้อแบบสี',
+      price: '198',
       badge: 'ใหม่',
+      image: '/image/goal.PNG',
+      images: ['/image/goal.PNG', '/image/goal1.PNG'],
       colors: ['ขาว', 'ดำ', 'กรมท่า'],
       description: 'ออกแบบพิเศษเฉพาะวาระครบรอบ 243 ปี ด้วยผ้าคอตตอนคุณภาพพรีเมียม ระบายอากาศได้ดี สวมใส่สบาย',
       features: ['ผ้าคอตตอน 100%', 'พิมพ์ลายคุณภาพสูง', 'ทนทานต่อการซัก']
     },
     {
       id: 2,
-      name: 'เสื้อโปโล Heritage',
-      price: '1,290',
+      name: 'แบบไว้ทุกข์',
+      price: '198',
       badge: 'สุดยอดความนิยม',
+      image: '/image/black.PNG',
+      images: ['/image/black.PNG', '/image/black1.PNG'],
       colors: ['ขาว', 'ดำ', 'กรมท่า', 'แดง'],
       description: 'สไตล์คลาสสิกผ้าคุณภาพพรีเมียม เหมาะสำหรับทุกโอกาส ดีไซน์หรูหรา มีระดับ',
       features: ['ผ้าโปโลพรีเมียม', 'คอปกคุณภาพ', 'ทรงสวยใส่สบาย']
@@ -269,7 +275,7 @@ export default function Home() {
                   {/* Product Image Area */}
                   <div className="relative bg-white aspect-square flex items-center justify-center p-6">
                     <img 
-                      src="/image/goal.png" 
+                      src={product.image} 
                       alt={product.name}
                       className="w-full h-full object-contain"
                     />
@@ -334,17 +340,25 @@ export default function Home() {
                 <div className="flex flex-col items-center">
                   <div className="bg-white border-2 border-gray-200 rounded-2xl w-64 h-64 flex items-center justify-center p-6 mb-3">
                     <img 
-                      src="/image/goal.png" 
+                      src={products.find(p => p.id === selectedProduct)?.images?.[selectedImage]} 
                       alt={products.find(p => p.id === selectedProduct)?.name}
                       className="w-full h-full object-contain"
                     />
                   </div>
                   <div className="grid grid-cols-4 gap-2 w-64">
-                    {[1,2,3,4].map((i) => (
-                      <div key={i} className="bg-white border-2 border-gray-200 rounded-lg aspect-square flex items-center justify-center">
-                        <svg className="w-7 h-7 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                    {products.find(p => p.id === selectedProduct)?.images?.map((img, index) => (
+                      <div 
+                        key={index} 
+                        onClick={() => setSelectedImage(index)}
+                        className={`bg-white border-2 rounded-lg aspect-square flex items-center justify-center cursor-pointer hover:border-blue-500 transition ${
+                          selectedImage === index ? 'border-blue-600' : 'border-gray-200'
+                        }`}
+                      >
+                        <img 
+                          src={img} 
+                          alt={`${products.find(p => p.id === selectedProduct)?.name} ${index + 1}`}
+                          className="w-full h-full object-contain p-1"
+                        />
                       </div>
                     ))}
                   </div>
