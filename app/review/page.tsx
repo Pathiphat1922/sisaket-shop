@@ -37,7 +37,14 @@ export default function ReviewPage() {
       : null;
     
     if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
+      const items = JSON.parse(savedCart);
+      if (items.length > 0) {
+        setCartItems(items);
+      } else {
+        // ถ้าตะกร้ามีแต่ `[]` (ว่าง) ก็ให้เด้งกลับ
+        alert("ไม่พบสินค้าในตะกร้า กรุณาเลือกสินค้าก่อนครับ");
+        router.push("/");
+      }
     } else {
       // ถ้าไม่มีของในตะกร้า ให้เด้งกลับไปหน้าแรก
       alert("ไม่พบสินค้าในตะกร้า กรุณาเลือกสินค้าก่อนครับ");
@@ -63,6 +70,32 @@ export default function ReviewPage() {
       localStorage.setItem("customer_info", JSON.stringify(updated));
     }
   };
+
+  // +++ 1. เพิ่มฟังก์ชันสำหรับลบสินค้า +++
+  const handleDeleteItem = (indexToDelete: number) => {
+    // ยืนยันก่อนลบ
+    if (!confirm("คุณต้องการลบสินค้ารายการนี้ใช่หรือไม่?")) {
+      return; // ถ้ากดยกเลิก ก็ไม่ต้องทำอะไรต่อ
+    }
+
+    // สร้างตะกร้าใหม่ โดยการกรอง (filter) เอาเฉพาะรายการที่ไม่ตรงกับ index ที่จะลบ
+    const updatedCart = cartItems.filter((_, index) => index !== indexToDelete);
+
+    // อัปเดต state (หน้าจอจะเปลี่ยนทันที)
+    setCartItems(updatedCart);
+
+    // บันทึกตะกร้าใหม่ลง localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cart_items", JSON.stringify(updatedCart));
+    }
+
+    // (สำคัญ) ถ้าลบจนตะกร้าว่าง ให้เด้งกลับหน้าแรก
+    if (updatedCart.length === 0) {
+      alert("ตะกร้าสินค้าว่างเปล่า กลับไปที่หน้าแรก");
+      router.push("/");
+    }
+  };
+
 
   // ตรวจสอบเบอร์โทร
   const validatePhone = (phone: string) => {
@@ -106,10 +139,24 @@ export default function ReviewPage() {
           </h2>
           <div className="space-y-3">
             {cartItems.length > 0 ? (
+              // +++ 2. แก้ไข .map() ให้มีปุ่มลบ +++
               cartItems.map((item, index) => (
                 <div key={index} className="flex justify-between items-center text-gray-700">
-                  <span>{item.type} (ไซส์: {item.size})</span>
-                  <span className="font-medium">x {item.quantity}</span>
+                  
+                  {/* ส่วนข้อมูลสินค้า */}
+                  <div className="flex-grow">
+                    <span>{item.type} (ไซส์: {item.size})</span>
+                    <span className="font-medium ml-2">x {item.quantity}</span>
+                  </div>
+
+                  {/* ปุ่มลบ */}
+                  <button
+                    onClick={() => handleDeleteItem(index)}
+                    className="ml-4 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold hover:bg-red-600 transition-colors"
+                    title="ลบรายการนี้"
+                  >
+                    X
+                  </button>
                 </div>
               ))
             ) : (
