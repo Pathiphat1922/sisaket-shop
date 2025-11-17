@@ -25,16 +25,19 @@ type FinalOrder = {
 };
 
 // --- (Prices... เหมือนเดิม) ---
-const T_SHIRT_PRICE = 250; 
-const SHIPPING_FEE = 40; 
+const T_SHIRT_PRICE = 198; 
+const SHIPPING_FEE = 50; 
 
 export default function ConfirmPage() {
   const router = useRouter(); 
   const [order, setOrder] = useState<FinalOrder | null>(null);
   const [paymentMethod, setPaymentMethod] = useState("transfer");
-  const [file, setFile] = useState<string | null>(null);
+  
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null); 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); 
+  const [isUploading, setIsUploading] = useState(false); 
 
-  // --- (useEffect, handleFileChange... เหมือนเดิม) ---
+  // --- (useEffect... เหมือนเดิม) ---
   useEffect(() => {
     const saved = localStorage.getItem("final_order");
     if (saved) {
@@ -50,33 +53,77 @@ export default function ConfirmPage() {
     : 0;
   const total = subtotal + SHIPPING_FEE;
 
-  const handleFileChange = (e: any) => {
-    const fileImg = e.target.files[0];
-    if (!fileImg) return;
+  // --- (handleFileChange... เหมือนเดิม) ---
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileImg = e.target.files ? e.target.files[0] : null;
+    
+    if (!fileImg) {
+      setPreviewUrl(null);
+      setSelectedFile(null);
+      return;
+    }
+
+    setSelectedFile(fileImg); 
+
     const reader = new FileReader();
-    reader.onload = (ev: any) => setFile(ev.target.result as string);
+    reader.onload = (ev: ProgressEvent<FileReader>) => {
+      if (ev.target && typeof ev.target.result === 'string') {
+        setPreviewUrl(ev.target.result);
+      }
+    };
     reader.readAsDataURL(fileImg);
   };
 
-  // === VVVV อัปเดตตรงนี้ VVVV ===
-  const submitPayment = () => {
-    // *** (โค้ดส่งข้อมูลไป API/LINE... อยู่ตรงนี้) ***
-    alert("ส่งข้อมูลการชำระเงินสำเร็จ! 🎉 ขอบคุณครับ");
-    
-    // (สำคัญ) ล้างตะกร้า แต่ "เก็บ" ข้อมูลลูกค้าไว้
-    localStorage.removeItem("final_order");
-    localStorage.removeItem("cart_items");
-    localStorage.removeItem("selected_shirt_type");
-    
-    // localStorage.removeItem("customer_info"); // <--- เรา "ไม่ลบ" บรรทัดนี้
+  // --- (submitPayment... เหมือนเดิม) ---
+  const submitPayment = async () => { 
+    if (!order) {
+      alert("ไม่พบข้อมูลคำสั่งซื้อ");
+      return;
+    }
+    if (paymentMethod === "transfer" && !selectedFile) {
+      alert("❌ กรุณาอัปโหลดสลิปการโอนเงินก่อนครับ");
+      return;
+    }
 
-    // สั่งให้วาร์ปกลับไปหน้าแรก
-    router.push("/"); 
+    setIsUploading(true); 
+
+    const formData = new FormData();
+    formData.append("order", JSON.stringify(order)); 
+    formData.append("paymentMethod", paymentMethod); 
+    formData.append("totalAmount", total.toString()); 
+
+    if (paymentMethod === "transfer" && selectedFile) {
+      formData.append("slipImage", selectedFile, selectedFile.name); 
+    }
+
+    try {
+      //
+      // ⬇️ (คุณต้องใส่โค้ด fetch / API ของคุณตรงนี้) ⬇️
+      //
+      console.log("กำลังส่งข้อมูล FormData:", ...formData.entries());
+      await new Promise(resolve => setTimeout(resolve, 2000)); // (จำลองการส่ง 2 วิ)
+      //
+      // ⬆️ (สิ้นสุดส่วน API) ⬆️
+      //
+
+      alert("ส่งข้อมูลการชำระเงินสำเร็จ! 🎉 ขอบคุณครับ");
+      
+      localStorage.removeItem("final_order");
+      localStorage.removeItem("cart_items");
+      localStorage.removeItem("selected_shirt_type");
+      
+      router.push("/"); 
+
+    } catch (error) {
+      console.error("Submit Payment Error:", error);
+      alert("❌ เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsUploading(false); 
+    }
   };
-  // === ^^^^ อัปเดตตรงนี้ ^^^^ ===
 
 
-  // --- (return (...) ... ส่วน UI เหมือนเดิม) ---
+  // --- (return (...) ... ส่วน UI) ---
   if (!order) {
     return <p className="p-6">กำลังโหลดข้อมูลคำสั่งซื้อ...</p>;
   }
@@ -121,6 +168,7 @@ export default function ConfirmPage() {
           <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
+            disabled={isUploading}
             className="w-full p-2 border rounded-lg"
           >
             <option value="transfer">โอนผ่านธนาคาร / QR</option>
@@ -132,38 +180,74 @@ export default function ConfirmPage() {
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="font-semibold">บัญชีธนาคาร</p>
               <p>🏦 ธ.กสิกรไทย</p>
-              <p>เลขบัญชี 123-4-56789-0 (ชื่อบัญชี ตัวอย่าง)</p>
+              <p>เลขบัญชี 3113-607-884 (ชื่อ นาย ปฏิพัทธ์ ศรีบุรินทร์)</p>
               <p className="font-semibold mt-2">หรือสแกน QR</p>
               <img
-                src="/images/qr.png" 
+                src="/images/qr.png" // (ผมลบตัวอักษร '_' ที่หลงมาในโค้ดก่อนหน้าให้แล้วครับ)
                 alt="QR Payment"
                 className="w-40 h-40 mt-2"
               />
             </div>
           )}
 
+          {/* +++ VVVV นี่คือส่วนที่แก้ไขให้สวยงามครับ VVVV +++ */}
           {/* Upload slip */}
           {paymentMethod === "transfer" && (
             <div>
               <p className="font-semibold">📄 อัปโหลดสลิปการโอนเงิน</p>
-              <input type="file" accept="image/*" onChange={handleFileChange} />
-              {file && (
+
+              {/* ซ่อน input จริง */}
+              <input 
+                id="file-upload" // เพิ่ม ID
+                type="file" 
+                accept="image/*" 
+                onChange={handleFileChange} 
+                disabled={isUploading}
+                className="hidden" // ซ่อน input นี้
+              />
+
+              {/* สร้าง Label ที่หน้าตาเหมือนปุ่ม */}
+              <label 
+                htmlFor="file-upload" // เชื่อม Label นี้กับ input
+                className={`mt-2 inline-block px-5 py-2 rounded-lg font-semibold cursor-pointer
+                            ${isUploading 
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                              : 'bg-blue-500 text-white hover:bg-blue-600 transition-colors'
+                            }`}
+              >
+                คลิกเพื่อเลือกไฟล์สลิป
+              </label>
+
+              {/* แสดงชื่อไฟล์ที่เลือก */}
+              {selectedFile && (
+                <span className="ml-3 text-sm text-gray-700 align-middle">
+                  {selectedFile.name}
+                </span>
+              )}
+              
+              {/* แสดงภาพตัวอย่าง */}
+              {previewUrl && (
                 <img
-                  src={file}
+                  src={previewUrl}
                   alt="Slip preview"
                   className="mt-3 w-60 border rounded-lg shadow"
                 />
               )}
             </div>
           )}
+          {/* +++ ^^^^ สิ้นสุดส่วนที่แก้ไข ^^^^ +++ */}
         </div>
 
         {/* ปุ่ม */}
         <button
           onClick={submitPayment}
-          className="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700"
+          disabled={isUploading} 
+          className="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700
+                     disabled:bg-gray-400 disabled:cursor-wait"
         >
-          {paymentMethod === 'cod' ? 'ยืนยันคำสั่งซื้อ (เก็บปลายทาง)' : 'ยืนยันการชำระเงิน'}
+          {isUploading 
+            ? "กำลังส่งข้อมูล..." 
+            : (paymentMethod === 'cod' ? 'ยืนยันคำสั่งซื้อ (เก็บปลายทาง)' : 'ยืนยันการชำระเงิน')}
         </button>
       </div>
     </div>
