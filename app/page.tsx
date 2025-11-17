@@ -2,11 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+
 import { useSession, signOut } from 'next-auth/react';
 
 export default function Home() {
   const router = useRouter();
   const { data: session, status } = useSession();
+
+
+// +++ 1. เพิ่ม Type นี้เพื่อให้ตรงกับหน้า Review +++
+type CartItem = {
+  type: string;
+  size: string;
+  quantity: number;
+};
+
+export default function Home() {
+  const router = useRouter();
+
   const fontStyle = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif'
   };
@@ -15,6 +28,7 @@ export default function Home() {
   const [selectedColor, setSelectedColor] = useState('white');
   const [selectedSize, setSelectedSize] = useState('M');
   const [isClosing, setIsClosing] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
 
   // ตรวจสอบ Authentication ด้วย NextAuth
   useEffect(() => {
@@ -45,11 +59,46 @@ export default function Home() {
     setTimeout(() => {
       setSelectedProduct(null);
       setIsClosing(false);
+      setSelectedImage(0);
     }, 300);
   };
 
-  const handleLogout = () => {
-    signOut({ callbackUrl: '/login' });
+  // +++ 2. เพิ่มฟังก์ชันสำหรับกดปุ่ม "เพิ่มลงตะกร้า" +++
+  const handleAddToCart = () => {
+    if (selectedProduct === null) {
+      alert("เกิดข้อผิดพลาด: ไม่ได้เลือกสินค้า");
+      return;
+    }
+
+    // 1. หาสินค้าที่เลือก
+    const product = products.find(p => p.id === selectedProduct);
+    if (!product) {
+      alert("เกิดข้อผิดพลาด: ไม่พบสินค้า");
+      return;
+    }
+
+    // 2. สร้าง Item ชิ้นใหม่ (กำหนดจำนวนเป็น 1 ชิ้น)
+    const newItem: CartItem = {
+      type: `${product.name} (สี: ${selectedColor})`, // เราสร้าง type ให้สื่อความหมายมากขึ้น
+      size: selectedSize,
+      quantity: 1 
+    };
+
+    // 3. ดึงตะกร้าเดิมจาก localStorage
+    const savedCart = localStorage.getItem("cart_items");
+    const existingCart: CartItem[] = savedCart ? JSON.parse(savedCart) : [];
+
+    // 4. เพิ่มของใหม่ลงในตะกร้า
+    const updatedCart = [...existingCart, newItem];
+    
+    // 5. บันทึกตะกร้าใหม่ลง localStorage
+    if (typeof window !== "undefined") {
+        localStorage.setItem("cart_items", JSON.stringify(updatedCart));
+    }
+
+    // 6. แจ้งเตือน และไปหน้า review
+    alert("เพิ่มสินค้าลงตะกร้าแล้ว!");
+    router.push("/review");
   };
 
   const colors = [
@@ -64,18 +113,22 @@ export default function Home() {
   const products = [
     {
       id: 1,
-      name: 'เสื้อเฉลิมฉลอง Edition',
-      price: '890',
+      name: 'เสื้อแบบสี',
+      price: '198',
       badge: 'ใหม่',
+      image: '/images/goal.PNG',
+      images: ['/images/goal.PNG', '/images/goal1.PNG'],
       colors: ['ขาว', 'ดำ', 'กรมท่า'],
       description: 'ออกแบบพิเศษเฉพาะวาระครบรอบ 243 ปี ด้วยผ้าคอตตอนคุณภาพพรีเมียม ระบายอากาศได้ดี สวมใส่สบาย',
       features: ['ผ้าคอตตอน 100%', 'พิมพ์ลายคุณภาพสูง', 'ทนทานต่อการซัก']
     },
     {
       id: 2,
-      name: 'เสื้อโปโล Heritage',
-      price: '1,290',
+      name: 'แบบไว้ทุกข์',
+      price: '198',
       badge: 'สุดยอดความนิยม',
+      image: '/images/black.PNG',
+      images: ['/images/black.PNG', '/images/black1.PNG'],
       colors: ['ขาว', 'ดำ', 'กรมท่า', 'แดง'],
       description: 'สไตล์คลาสสิกผ้าคุณภาพพรีเมียม เหมาะสำหรับทุกโอกาส ดีไซน์หรูหรา มีระดับ',
       features: ['ผ้าโปโลพรีเมียม', 'คอปกคุณภาพ', 'ทรงสวยใส่สบาย']
@@ -175,27 +228,21 @@ export default function Home() {
       }`}>
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg"></div>
-            <span className="text-xl font-semibold text-gray-900">เมือง 243 ปี</span>
+          
+            <span className="text-xl font-semibold text-gray-900">เสื้อเฉลิมฉลองเมือง 243 ปี</span>
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium text-gray-700">
-            <a href="#hero" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e as React.MouseEvent<HTMLElement>, 'hero')}>หน้าแรก</a>
-            <a href="#products" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e as React.MouseEvent<HTMLElement>, 'products')}>สินค้า</a>
-            <a href="#orders" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e as React.MouseEvent<HTMLElement>, 'orders')}>รายการสั่งซื้อ</a>
-            <a href="#about" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e as React.MouseEvent<HTMLElement>, 'about')}>เกี่ยวกับ</a>
-            <a href="#contact" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e as React.MouseEvent<HTMLElement>, 'contact')}>ติดต่อ</a>
+            <a href="#hero" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'hero')}>หน้าแรก</a>
+            <a href="#products" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'products')}>สินค้า</a>
+           <a href="/store" className="hover:text-gray-900 transition cursor-pointer">รายการสั่งซื้อ</a>
+            
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-700">
-              {session.user?.name || session.user?.email}
-            </span>
-            <button 
-              onClick={handleLogout}
-              className="bg-red-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-red-700 transition"
-            >
-              ออกจากระบบ
-            </button>
-          </div>
+          <button 
+            onClick={() => router.push('/order')}
+            className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition"
+          >
+            ซื้อเลย
+          </button>
         </div>
       </nav>
 
@@ -209,9 +256,6 @@ export default function Home() {
         />
         <div className="relative z-10 text-center px-6 max-w-5xl">
           <div className="mb-6 inline-block">
-            <span className="bg-gradient-to-r from-orange-500 to-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold">
-              ฉลองครบรอบ 243 ปี
-            </span>
           </div>
           <h1 
             className="text-6xl md:text-8xl font-bold mb-6 tracking-tight bg-gradient-to-r from-gray-900 via-blue-800 to-purple-900 bg-clip-text text-transparent leading-tight"
@@ -250,43 +294,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Feature Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-12">
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition shadow-lg">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold mb-3 text-gray-900">คุณภาพพรีเมียม</h3>
-              <p className="text-gray-600 text-lg">ผ้าคุณภาพสูง ทนทาน สวมใส่สบาย</p>
-            </div>
-            
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition shadow-lg">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold mb-3 text-gray-900">ออกแบบพิเศษ</h3>
-              <p className="text-gray-600 text-lg">ดีไซน์เฉพาะเจาะจงสำหรับวาระพิเศษ</p>
-            </div>
-            
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition shadow-lg">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold mb-3 text-gray-900">จำนวนจำกัด</h3>
-              <p className="text-gray-600 text-lg">ผลิตจำนวนจำกัดเฉพาะปีนี้เท่านั้น</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Products Section */}
       <section id="products" className="py-20 bg-gray-100">
         <div className="max-w-7xl mx-auto px-6">
@@ -314,10 +321,12 @@ export default function Home() {
               >
                 <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
                   {/* Product Image Area */}
-                  <div className="relative bg-gradient-to-br from-blue-100 to-purple-100 aspect-square flex items-center justify-center p-6">
-                    <div className="w-full h-full bg-white rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400 text-sm">รูปภาพสินค้า</span>
-                    </div>
+                  <div className="relative bg-white aspect-square flex items-center justify-center p-6">
+                    <img 
+                      src={product.image} 
+                      alt={product.name}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   
                   {/* Product Info */}
@@ -373,19 +382,31 @@ export default function Home() {
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto">
+            <div className="p-6">
               <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
                 {/* Product Image */}
                 <div className="flex flex-col items-center">
-                  <div className="bg-gradient-to-br from-blue-100 to-purple-100 border-2 border-gray-200 rounded-2xl w-64 h-64 flex items-center justify-center p-6 mb-3">
-                    <span className="text-gray-400">รูปภาพสินค้า</span>
+                  <div className="bg-white border-2 border-gray-200 rounded-2xl w-64 h-64 flex items-center justify-center p-6 mb-3">
+                    <img 
+                      src={products.find(p => p.id === selectedProduct)?.images?.[selectedImage]} 
+                      alt={products.find(p => p.id === selectedProduct)?.name}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   <div className="grid grid-cols-4 gap-2 w-64">
-                    {[1,2,3,4].map((i) => (
-                      <div key={i} className="bg-gray-100 border-2 border-gray-200 rounded-lg aspect-square flex items-center justify-center">
-                        <svg className="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                    {products.find(p => p.id === selectedProduct)?.images?.map((img, index) => (
+                      <div 
+                        key={index} 
+                        onClick={() => setSelectedImage(index)}
+                        className={`bg-white border-2 rounded-lg aspect-square flex items-center justify-center cursor-pointer hover:border-blue-500 transition ${
+                          selectedImage === index ? 'border-blue-600' : 'border-gray-200'
+                        }`}
+                      >
+                        <img 
+                          src={img} 
+                          alt={`${products.find(p => p.id === selectedProduct)?.name} ${index + 1}`}
+                          className="w-full h-full object-contain p-1"
+                        />
                       </div>
                     ))}
                   </div>
@@ -460,8 +481,11 @@ export default function Home() {
                     </div>
                   </div>
                   
-                  {/* Add to Cart */}
-                  <button className="w-full bg-blue-600 text-white py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition transform hover:scale-[1.02] shadow-lg mt-auto">
+                  {/* +++ 3. เปลี่ยน onClick ให้เรียกใช้ฟังก์ชันใหม่ +++ */}
+                  <button 
+                    onClick={handleAddToCart}
+                    className="w-full bg-blue-600 text-white py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition transform hover:scale-[1.02] shadow-lg mt-auto"
+                  >
                     เพิ่มลงตะกร้า - ฿{products.find(p => p.id === selectedProduct)?.price}
                   </button>
                 </div>
@@ -645,15 +669,8 @@ export default function Home() {
               </div>
             </div>
           </div>
-          
-          <div className="border-t border-gray-800 pt-8">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              <div className="flex items-center gap-2 mb-4 md:mb-0">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg"></div>
-                <span className="text-lg font-semibold">เมือง 243 ปี</span>
-              </div>
-              <p className="text-gray-400 text-sm">© 2568 เมือง 243 ปี. สงวนสิทธิ์ทั้งหมด</p>
-            </div>
+          <div className="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
+            <p>&copy; 2024 เสื้อเฉลิมฉลองเมือง 243 ปี สงวนลิขสิทธิ์.</p>
           </div>
         </div>
       </footer>
