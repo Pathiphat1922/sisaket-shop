@@ -19,7 +19,7 @@ type CartItem = {
   quantity: number;
 };
 
-// Type สำหรับออเดอร์ (เพิ่มใหม่เพื่อให้ TypeScript รู้จัก)
+// Type สำหรับออเดอร์
 type OrderType = {
   id: string;
   product: string;
@@ -50,7 +50,7 @@ export default function Home() {
   const [isClosing, setIsClosing] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
 
-  // 🟡 State สำหรับเก็บรายการสั่งซื้อจริง (เพิ่มใหม่)
+  // 🟡 State สำหรับเก็บรายการสั่งซื้อจริง
   const [myOrders, setMyOrders] = useState<OrderType[]>([]);
 
   // --- useEffect ---
@@ -69,15 +69,11 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []); 
 
-  // 🟡 3. ดึงข้อมูลออเดอร์จริงจาก LocalStorage (เพิ่มใหม่)
+  // 3. ดึงข้อมูลออเดอร์จริงจาก LocalStorage
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.email) {
-      // ดึงข้อมูลทั้งหมดมา
       const allHistory = JSON.parse(localStorage.getItem("all_orders_history") || "[]");
-      
-      // กรองเอาเฉพาะของ "ฉัน" (เช็คจากอีเมล)
       const userOrders = allHistory.filter((order: OrderType) => order.email === session.user?.email);
-      
       setMyOrders(userOrders);
     }
   }, [status, session]);
@@ -131,15 +127,6 @@ export default function Home() {
   };
 
   // --- Data Arrays ---
-  const colors = [
-    { name: 'white', label: 'ขาว', hex: '#FFFFFF', border: '#e5e7eb' },
-    { name: 'black', label: 'ดำ', hex: '#000000', border: '#000000' },
-    { name: 'navy', label: 'กรมท่า', hex: '#1e3a8a', border: '#1e3a8a' },
-    { name: 'red', label: 'แดง', hex: '#dc2626', border: '#dc2626' },
-  ];
-
-  const sizes = ['S', 'M', 'L', 'XL', '2XL'];
-
   const products = [
     {
       id: 1,
@@ -165,8 +152,6 @@ export default function Home() {
     },
   ];
 
-  // (ลบ const orders แบบ dummy ทิ้งไปแล้ว เพราะเราใช้ state myOrders แทน)
-
   // --- Loading Check ---
   if (status === 'loading') {
     return (
@@ -190,7 +175,6 @@ export default function Home() {
         * {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
         }
-        /* ... styles เดิม ... */
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
         .animate-fadeOut { animation: fadeOut 0.3s ease-out; }
         .animate-scaleIn { animation: scaleIn 0.3s ease-out; }
@@ -221,12 +205,19 @@ export default function Home() {
               ซื้อเลย
             </button>
 
+            {/* 🟢 [แก้ไข] เปลี่ยนปุ่ม Admin เป็น Dashboard */}
             {isAdmin && (
               <button 
                 onClick={() => router.push('/dashboard')}
-                className="bg-gray-800 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-black transition flex items-center gap-2 shadow-md"
+                className="bg-gray-800 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-black transition flex items-center gap-2 shadow-md"
               >
-               
+                {/* เปลี่ยนไอคอนเป็นรูปตาราง (Dashboard Icon) */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
                 Dashboard
               </button>
             )}
@@ -241,7 +232,7 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section (เหมือนเดิม) */}
+      {/* Hero Section */}
       <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50">
          <div 
           className="absolute inset-0 bg-gradient-to-br from-orange-100/50 via-blue-100/50 to-purple-100/50"
@@ -289,9 +280,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Products Section (เหมือนเดิม) */}
       {/* Products Section */}
-      {/* เพิ่ม min-h-screen flex items-center justify-center เพื่อจัดกึ่งกลางแนวตั้ง */}
       <section id="products" className="min-h-screen flex items-center justify-center py-20 bg-gray-100">
         <div className="max-w-7xl mx-auto px-6 w-full">
           <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
@@ -349,7 +338,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Product Detail Modal (เหมือนเดิม) */}
+      {/* Product Detail Modal */}
       {selectedProduct && (
         <div 
           className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6 ${
@@ -435,9 +424,6 @@ export default function Home() {
                       ))}
                     </ul>
                   </div>
-                 
-                  
-                 
                 </div>
               </div>
             </div>
@@ -445,7 +431,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Orders Section (แก้ไขให้แสดงรายการจริง) */}
+      {/* Orders Section */}
       <section id="orders" className="py-20 bg-gray-50">
          <div className="max-w-7xl mx-auto px-6">
           <div className="mb-12 text-center">
@@ -466,7 +452,6 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {/* 🟡 ใช้ myOrders.map แทนของปลอม */}
                   {myOrders.length > 0 ? (
                     myOrders.map((order, index) => (
                       <tr key={index} className="border-b hover:bg-gray-50 transition">
@@ -517,10 +502,7 @@ export default function Home() {
       {/* Contact Section */}
       <section id="contact" className="py-20 bg-gray-50">
          <div className="max-w-7xl mx-auto px-6">
-         
-         
-          {/* Contact Form */}
-        
+         {/* Contact Form Content */}
         </div>
       </section>
 
