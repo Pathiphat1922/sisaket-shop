@@ -2,16 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+// (1) รวม import ทั้งสองส่วนไว้บนสุด
+import { useSession, signOut } from 'next-auth/react'; 
 
-// +++ 1. เพิ่ม Type นี้เพื่อให้ตรงกับหน้า Review +++
+// (2) ย้าย Type ออกมาไว้นอก Component
 type CartItem = {
   type: string;
   size: string;
   quantity: number;
 };
 
+// (3) ประกาศ function Home() แค่ครั้งเดียว
 export default function Home() {
   const router = useRouter();
+  const { data: session, status } = useSession(); // (4) เรียกใช้ Hook ทั้งหมดไว้ด้วยกัน
+
+  // --- State ของ Modal (จาก branch dev) ---
   const fontStyle = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif'
   };
@@ -22,13 +28,25 @@ export default function Home() {
   const [isClosing, setIsClosing] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
 
+  // --- useEffect (รวมจาก 2 branch) ---
+  
+  // (5) useEffect จาก Future/login (สำหรับตรวจสอบสิทธิ์)
+  useEffect(() => {
+    // ถ้า status ไม่ใช่ loading และยังไม่มี session (unauthenticated)
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  // useEffect จาก dev (สำหรับ scroll)
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, []); // ใส่ [] เพื่อให้ทำงานครั้งเดียวตอนเริ่ม
 
-  const smoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+  // --- Helper Functions (รวมจาก 2 branch) ---
+  const smoothScroll = (e: React.MouseEvent<HTMLElement>, targetId: string) => {
     e.preventDefault();
     const element = document.getElementById(targetId);
     if (element) {
@@ -48,44 +66,33 @@ export default function Home() {
     }, 300);
   };
 
-  // +++ 2. เพิ่มฟังก์ชันสำหรับกดปุ่ม "เพิ่มลงตะกร้า" +++
   const handleAddToCart = () => {
     if (selectedProduct === null) {
       alert("เกิดข้อผิดพลาด: ไม่ได้เลือกสินค้า");
       return;
     }
-
-    // 1. หาสินค้าที่เลือก
     const product = products.find(p => p.id === selectedProduct);
     if (!product) {
       alert("เกิดข้อผิดพลาด: ไม่พบสินค้า");
       return;
     }
-
-    // 2. สร้าง Item ชิ้นใหม่ (กำหนดจำนวนเป็น 1 ชิ้น)
     const newItem: CartItem = {
-      type: `${product.name} (สี: ${selectedColor})`, // เราสร้าง type ให้สื่อความหมายมากขึ้น
+      type: `${product.name} (สี: ${selectedColor})`, 
       size: selectedSize,
       quantity: 1 
     };
-
-    // 3. ดึงตะกร้าเดิมจาก localStorage
     const savedCart = localStorage.getItem("cart_items");
     const existingCart: CartItem[] = savedCart ? JSON.parse(savedCart) : [];
-
-    // 4. เพิ่มของใหม่ลงในตะกร้า
     const updatedCart = [...existingCart, newItem];
     
-    // 5. บันทึกตะกร้าใหม่ลง localStorage
     if (typeof window !== "undefined") {
         localStorage.setItem("cart_items", JSON.stringify(updatedCart));
     }
-
-    // 6. แจ้งเตือน และไปหน้า review
     alert("เพิ่มสินค้าลงตะกร้าแล้ว!");
     router.push("/review");
   };
 
+  // --- Data Arrays (รวมจาก 2 branch) ---
   const colors = [
     { name: 'white', label: 'ขาว', hex: '#FFFFFF', border: '#e5e7eb' },
     { name: 'black', label: 'ดำ', hex: '#000000', border: '#000000' },
@@ -120,6 +127,32 @@ export default function Home() {
     },
   ];
 
+  // (6) Data จาก Future/login
+  const orders = [
+    { id: 'ORD-001', product: 'เสื้อเฉลิมฉลอง Edition', date: '15 พ.ย. 2568', status: 'จัดส่งแล้ว', amount: '890' },
+    { id: 'ORD-002', product: 'เสื้อโปโล Heritage', date: '14 พ.ย. 2568', status: 'กำลังจัดส่ง', amount: '1,290' },
+    { id: 'ORD-003', product: 'เสื้อเฉลิมฉลอง Edition', date: '13 พ.ย. 2568', status: 'รอการยืนยัน', amount: '890' },
+  ];
+
+  // --- (7) Loading และ Auth Check (จาก Future/login) ---
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-700 text-lg font-medium">กำลังตรวจสอบสิทธิ์...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ถ้า status ไม่ใช่ loading และยังไม่มี session (unauthenticated)
+  // (useEffect ด้านบนจะจัดการ redirect ไป /login แล้ว)
+  if (!session) {
+    return null; // แสดงหน้าว่างๆ ระหว่างรอ redirect
+  }
+
+  // --- (8) JSX ทั้งหมด (รวมทุก Section) ---
   return (
     <div className="min-h-screen bg-white" style={fontStyle}>
       <style jsx global>{`
@@ -183,33 +216,44 @@ export default function Home() {
           animation: scaleOut 0.3s ease-out;
         }
       `}</style>
+      
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
         scrollY > 50 ? 'bg-white/70 backdrop-blur-2xl shadow-sm' : 'bg-white/50 backdrop-blur-md'
       }`}>
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-          
             <span className="text-xl font-semibold text-gray-900">เสื้อเฉลิมฉลองเมือง 243 ปี</span>
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium text-gray-700">
             <a href="#hero" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'hero')}>หน้าแรก</a>
             <a href="#products" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'products')}>สินค้า</a>
-           <a href="/store" className="hover:text-gray-900 transition cursor-pointer">รายการสั่งซื้อ</a>
-            
+            <a href="/store" className="hover:text-gray-900 transition cursor-pointer">รายการสั่งซื้อ</a>
+            <a href="#orders" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'orders')}>คำสั่งซื้อของฉัน</a>
+            <a href="#contact" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'contact')}>ติดต่อ</a>
           </div>
-          <button 
-            onClick={() => router.push('/order')}
-            className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition"
-          >
-            ซื้อเลย
-          </button>
+          
+          {/* (9) รวมปุ่ม "ซื้อเลย" และ "ออกจากระบบ" */}
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => router.push('/order')}
+              className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition"
+            >
+              ซื้อเลย
+            </button>
+            <button 
+              onClick={() => signOut()} // ปุ่มออกจากระบบ
+              className="bg-red-500 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-red-600 transition"
+            >
+              ออกจากระบบ
+            </button>
+          </div>
         </div>
       </nav>
 
       {/* Hero Section */}
       <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50">
-        <div 
+         <div 
           className="absolute inset-0 bg-gradient-to-br from-orange-100/50 via-blue-100/50 to-purple-100/50"
           style={{
             transform: `scale(${1 + scrollY * 0.0005})`,
@@ -217,6 +261,7 @@ export default function Home() {
         />
         <div className="relative z-10 text-center px-6 max-w-5xl">
           <div className="mb-6 inline-block">
+            {/* ... (Badge "ฉลองครบรอบ 243 ปี" ถ้ามี) ... */}
           </div>
           <h1 
             className="text-6xl md:text-8xl font-bold mb-6 tracking-tight bg-gradient-to-r from-gray-900 via-blue-800 to-purple-900 bg-clip-text text-transparent leading-tight"
@@ -239,7 +284,7 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center">
             <button 
-              onClick={(e) => smoothScroll(e as any, 'products')}
+              onClick={(e) => smoothScroll(e, 'products')}
               className="bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-blue-700 transition transform hover:scale-105 shadow-lg"
             >
               สำรวจคอลเลคชัน
@@ -257,7 +302,7 @@ export default function Home() {
 
       {/* Products Section */}
       <section id="products" className="py-20 bg-gray-100">
-        <div className="max-w-7xl mx-auto px-6">
+         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
             {/* Info Card */}
             <div>
@@ -267,7 +312,7 @@ export default function Home() {
                 <div className="text-center text-white">
                   <h3 className="text-3xl md:text-4xl font-bold mb-4">คอลเลคชันของเรา</h3>
                   <p className="text-sm md:text-base leading-relaxed">
-                    เลือกสรรดีไซน์พิเศษเฉพาะวาระ<br/>
+                    เลือกสรรดีไซน์พิเศษเฉพาะวาระ
                   </p>
                 </div>
               </div>
@@ -320,7 +365,7 @@ export default function Home() {
           }`}
           onClick={handleCloseModal}
         >
-          <div 
+           <div 
             className={`bg-white rounded-3xl w-full max-w-5xl shadow-2xl flex flex-col ${
               isClosing ? 'animate-scaleOut' : 'animate-scaleIn'
             }`}
@@ -442,7 +487,6 @@ export default function Home() {
                     </div>
                   </div>
                   
-                  {/* +++ 3. เปลี่ยน onClick ให้เรียกใช้ฟังก์ชันใหม่ +++ */}
                   <button 
                     onClick={handleAddToCart}
                     className="w-full bg-blue-600 text-white py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition transform hover:scale-[1.02] shadow-lg mt-auto"
@@ -456,9 +500,54 @@ export default function Home() {
         </div>
       )}
 
+      {/* (9) Section ใหม่ (จาก Future/login) */}
+      <section id="orders" className="py-20 bg-gray-50">
+         <div className="max-w-7xl mx-auto px-6">
+          <div className="mb-12 text-center">
+            <h2 className="text-5xl font-bold text-gray-900 mb-4">รายการสั่งซื้อของฉัน</h2>
+            <p className="text-xl text-gray-600">ติดตามสถานะการสั่งซื้อของคุณ</p>
+          </div>
+          
+          <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-100 border-b">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">เลขที่คำสั่ง</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">สินค้า</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">วันที่</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">สถานะ</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">จำนวนเงิน</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <tr key={order.id} className="border-b hover:bg-gray-50 transition">
+                      <td className="px-6 py-4 text-sm font-medium text-blue-600">{order.id}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{order.product}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{order.date}</td>
+                      <td className="px-6 py-4 text-sm">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          order.status === 'จัดส่งแล้ว' ? 'bg-green-100 text-green-800' :
+                          order.status === 'กำลังจัดส่ง' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">฿{order.amount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* About Section */}
       <section id="about" className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-5xl font-bold text-gray-900 mb-6">243 ปี แห่งประวัติศาสตร์</h2>
           <p className="text-xl text-gray-700 leading-relaxed mb-8">
             เสื้อเฉลิมฉลองครบรอบ 243 ปี ออกแบบขึ้นเพื่อเฉลิมฉลองความยิ่งใหญ่และประวัติศาสตร์อันยาวนาน
@@ -471,31 +560,102 @@ export default function Home() {
         </div>
       </section>
 
+      {/* (10) Section ใหม่ (จาก Future/login) */}
+      <section id="contact" className="py-20 bg-gray-50">
+         <div className="max-w-7xl mx-auto px-6">
+          <div className="mb-12 text-center">
+            <h2 className="text-5xl font-bold text-gray-900 mb-4">ติดต่อเรา</h2>
+            <p className="text-xl text-gray-600">มีคำถามหรือต้องการความช่วยเหลือ?</p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Phone */}
+            <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition text-center">
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">โทรศัพท์</h3>
+              <p className="text-gray-600 text-lg">+66 (0) XX-XXX-XXXX</p>
+              <p className="text-sm text-gray-500 mt-2">วันจันทร์ - วันศุกร์ 09:00 - 18:00</p>
+            </div>
+
+            {/* Email */}
+            <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition text-center">
+              <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">อีเมล</h3>
+              <p className="text-gray-600 text-lg">info@city243.com</p>
+              <p className="text-sm text-gray-500 mt-2">ตอบกลับภายใน 24 ชั่วโมง</p>
+            </div>
+
+            {/* Location */}
+            <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition text-center">
+              <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">สถานที่</h3>
+              <p className="text-gray-600 text-lg">เมืองเรา</p>
+              <p className="text-sm text-gray-500 mt-2">เมืองหลัก</p>
+            </div>
+          </div>
+
+          {/* Contact Form */}
+          <div className="max-w-2xl mx-auto mt-12 bg-white rounded-2xl p-8 shadow-md">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">ส่งข้อความให้เรา</h3>
+            <form className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">ชื่อ</label>
+                <input type="text" placeholder="ชื่อของคุณ" className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 transition" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">อีเมล</label>
+                <input type="email" placeholder="อีเมลของคุณ" className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 transition" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">ข้อความ</label>
+                <textarea placeholder="ข้อความของคุณ" rows={5} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 transition resize-none"></textarea>
+              </div>
+              <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition transform hover:scale-[1.02] shadow-lg">
+                ส่งข้อความ
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-6">
+         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <h4 className="font-bold mb-4 text-lg">ช้อปปิ้ง</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#" className="hover:text-white transition">สินค้าทั้งหมด</a></li>
-                <li><a href="#" className="hover:text-white transition">สินค้าใหม่</a></li>
-                <li><a href="#" className="hover:text-white transition">สินค้าขายดี</a></li>
+                <li><a href="#products" className="hover:text-white transition">สินค้าทั้งหมด</a></li>
+                <li><a href="#products" className="hover:text-white transition">สินค้าใหม่</a></li>
+                <li><a href="#products" className="hover:text-white transition">สินค้าขายดี</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4 text-lg">บริการ</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#" className="hover:text-white transition">ติดตามสินค้า</a></li>
-                <li><a href="#" className="hover:text-white transition">นโยบายการคืนสินค้า</a></li>
-                <li><a href="#" className="hover:text-white transition">การจัดส่ง</a></li>
+                <li><a href="#contact" className="hover:text-white transition">ติดตามสินค้า</a></li>
+                <li><a href="#contact" className="hover:text-white transition">นโยบายการคืนสินค้า</a></li>
+                <li><a href="#contact" className="hover:text-white transition">การจัดส่ง</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4 text-lg">เกี่ยวกับเรา</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#" className="hover:text-white transition">เรื่องราวของเรา</a></li>
-                <li><a href="#" className="hover:text-white transition">ติดต่อเรา</a></li>
+                <li><a href="#about" className="hover:text-white transition">เรื่องราวของเรา</a></li>
+                <li><a href="#contact" className="hover:text-white transition">ติดต่อเรา</a></li>
                 <li><a href="#" className="hover:text-white transition">ร่วมงานกับเรา</a></li>
               </ul>
             </div>
