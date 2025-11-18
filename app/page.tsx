@@ -2,24 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+// (1) รวม import ทั้งสองส่วนไว้บนสุด
+import { useSession, signOut } from 'next-auth/react'; 
 
-import { useSession, signOut } from 'next-auth/react';
-
-export default function Home() {
-  const router = useRouter();
-  const { data: session, status } = useSession();
-
-
-// +++ 1. เพิ่ม Type นี้เพื่อให้ตรงกับหน้า Review +++
+// (2) ย้าย Type ออกมาไว้นอก Component
 type CartItem = {
   type: string;
   size: string;
   quantity: number;
 };
 
+// (3) ประกาศ function Home() แค่ครั้งเดียว
 export default function Home() {
   const router = useRouter();
+  const { data: session, status } = useSession(); // (4) เรียกใช้ Hook ทั้งหมดไว้ด้วยกัน
 
+  // --- State ของ Modal (จาก branch dev) ---
   const fontStyle = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif'
   };
@@ -30,19 +28,24 @@ export default function Home() {
   const [isClosing, setIsClosing] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
 
-  // ตรวจสอบ Authentication ด้วย NextAuth
+  // --- useEffect (รวมจาก 2 branch) ---
+  
+  // (5) useEffect จาก Future/login (สำหรับตรวจสอบสิทธิ์)
   useEffect(() => {
+    // ถ้า status ไม่ใช่ loading และยังไม่มี session (unauthenticated)
     if (status === 'unauthenticated') {
       router.push('/login');
     }
   }, [status, router]);
 
+  // useEffect จาก dev (สำหรับ scroll)
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, []); // ใส่ [] เพื่อให้ทำงานครั้งเดียวตอนเริ่ม
 
+  // --- Helper Functions (รวมจาก 2 branch) ---
   const smoothScroll = (e: React.MouseEvent<HTMLElement>, targetId: string) => {
     e.preventDefault();
     const element = document.getElementById(targetId);
@@ -63,44 +66,33 @@ export default function Home() {
     }, 300);
   };
 
-  // +++ 2. เพิ่มฟังก์ชันสำหรับกดปุ่ม "เพิ่มลงตะกร้า" +++
   const handleAddToCart = () => {
     if (selectedProduct === null) {
       alert("เกิดข้อผิดพลาด: ไม่ได้เลือกสินค้า");
       return;
     }
-
-    // 1. หาสินค้าที่เลือก
     const product = products.find(p => p.id === selectedProduct);
     if (!product) {
       alert("เกิดข้อผิดพลาด: ไม่พบสินค้า");
       return;
     }
-
-    // 2. สร้าง Item ชิ้นใหม่ (กำหนดจำนวนเป็น 1 ชิ้น)
     const newItem: CartItem = {
-      type: `${product.name} (สี: ${selectedColor})`, // เราสร้าง type ให้สื่อความหมายมากขึ้น
+      type: `${product.name} (สี: ${selectedColor})`, 
       size: selectedSize,
       quantity: 1 
     };
-
-    // 3. ดึงตะกร้าเดิมจาก localStorage
     const savedCart = localStorage.getItem("cart_items");
     const existingCart: CartItem[] = savedCart ? JSON.parse(savedCart) : [];
-
-    // 4. เพิ่มของใหม่ลงในตะกร้า
     const updatedCart = [...existingCart, newItem];
     
-    // 5. บันทึกตะกร้าใหม่ลง localStorage
     if (typeof window !== "undefined") {
         localStorage.setItem("cart_items", JSON.stringify(updatedCart));
     }
-
-    // 6. แจ้งเตือน และไปหน้า review
     alert("เพิ่มสินค้าลงตะกร้าแล้ว!");
     router.push("/review");
   };
 
+  // --- Data Arrays (รวมจาก 2 branch) ---
   const colors = [
     { name: 'white', label: 'ขาว', hex: '#FFFFFF', border: '#e5e7eb' },
     { name: 'black', label: 'ดำ', hex: '#000000', border: '#000000' },
@@ -135,13 +127,14 @@ export default function Home() {
     },
   ];
 
+  // (6) Data จาก Future/login
   const orders = [
     { id: 'ORD-001', product: 'เสื้อเฉลิมฉลอง Edition', date: '15 พ.ย. 2568', status: 'จัดส่งแล้ว', amount: '890' },
     { id: 'ORD-002', product: 'เสื้อโปโล Heritage', date: '14 พ.ย. 2568', status: 'กำลังจัดส่ง', amount: '1,290' },
     { id: 'ORD-003', product: 'เสื้อเฉลิมฉลอง Edition', date: '13 พ.ย. 2568', status: 'รอการยืนยัน', amount: '890' },
   ];
 
-  // แสดงหน้า Loading ขณะตรวจสอบ Authentication
+  // --- (7) Loading และ Auth Check (จาก Future/login) ---
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50">
@@ -153,11 +146,13 @@ export default function Home() {
     );
   }
 
-  // ถ้ายังไม่ได้ login
+  // ถ้า status ไม่ใช่ loading และยังไม่มี session (unauthenticated)
+  // (useEffect ด้านบนจะจัดการ redirect ไป /login แล้ว)
   if (!session) {
-    return null;
+    return null; // แสดงหน้าว่างๆ ระหว่างรอ redirect
   }
 
+  // --- (8) JSX ทั้งหมด (รวมทุก Section) ---
   return (
     <div className="min-h-screen bg-white" style={fontStyle}>
       <style jsx global>{`
@@ -228,27 +223,37 @@ export default function Home() {
       }`}>
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-          
             <span className="text-xl font-semibold text-gray-900">เสื้อเฉลิมฉลองเมือง 243 ปี</span>
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium text-gray-700">
             <a href="#hero" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'hero')}>หน้าแรก</a>
             <a href="#products" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'products')}>สินค้า</a>
-           <a href="/store" className="hover:text-gray-900 transition cursor-pointer">รายการสั่งซื้อ</a>
-            
+            <a href="/store" className="hover:text-gray-900 transition cursor-pointer">รายการสั่งซื้อ</a>
+            <a href="#orders" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'orders')}>คำสั่งซื้อของฉัน</a>
+            <a href="#contact" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'contact')}>ติดต่อ</a>
           </div>
-          <button 
-            onClick={() => router.push('/order')}
-            className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition"
-          >
-            ซื้อเลย
-          </button>
+          
+          {/* (9) รวมปุ่ม "ซื้อเลย" และ "ออกจากระบบ" */}
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => router.push('/order')}
+              className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition"
+            >
+              ซื้อเลย
+            </button>
+            <button 
+              onClick={() => signOut()} // ปุ่มออกจากระบบ
+              className="bg-red-500 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-red-600 transition"
+            >
+              ออกจากระบบ
+            </button>
+          </div>
         </div>
       </nav>
 
       {/* Hero Section */}
       <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50">
-        <div 
+         <div 
           className="absolute inset-0 bg-gradient-to-br from-orange-100/50 via-blue-100/50 to-purple-100/50"
           style={{
             transform: `scale(${1 + scrollY * 0.0005})`,
@@ -256,6 +261,7 @@ export default function Home() {
         />
         <div className="relative z-10 text-center px-6 max-w-5xl">
           <div className="mb-6 inline-block">
+            {/* ... (Badge "ฉลองครบรอบ 243 ปี" ถ้ามี) ... */}
           </div>
           <h1 
             className="text-6xl md:text-8xl font-bold mb-6 tracking-tight bg-gradient-to-r from-gray-900 via-blue-800 to-purple-900 bg-clip-text text-transparent leading-tight"
@@ -278,7 +284,7 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center">
             <button 
-              onClick={(e) => smoothScroll(e as React.MouseEvent<HTMLElement>, 'products')}
+              onClick={(e) => smoothScroll(e, 'products')}
               className="bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-blue-700 transition transform hover:scale-105 shadow-lg"
             >
               สำรวจคอลเลคชัน
@@ -296,7 +302,7 @@ export default function Home() {
 
       {/* Products Section */}
       <section id="products" className="py-20 bg-gray-100">
-        <div className="max-w-7xl mx-auto px-6">
+         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
             {/* Info Card */}
             <div>
@@ -359,7 +365,7 @@ export default function Home() {
           }`}
           onClick={handleCloseModal}
         >
-          <div 
+           <div 
             className={`bg-white rounded-3xl w-full max-w-5xl shadow-2xl flex flex-col ${
               isClosing ? 'animate-scaleOut' : 'animate-scaleIn'
             }`}
@@ -481,7 +487,6 @@ export default function Home() {
                     </div>
                   </div>
                   
-                  {/* +++ 3. เปลี่ยน onClick ให้เรียกใช้ฟังก์ชันใหม่ +++ */}
                   <button 
                     onClick={handleAddToCart}
                     className="w-full bg-blue-600 text-white py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition transform hover:scale-[1.02] shadow-lg mt-auto"
@@ -495,9 +500,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* Orders Section */}
+      {/* (9) Section ใหม่ (จาก Future/login) */}
       <section id="orders" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
+         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-12 text-center">
             <h2 className="text-5xl font-bold text-gray-900 mb-4">รายการสั่งซื้อของฉัน</h2>
             <p className="text-xl text-gray-600">ติดตามสถานะการสั่งซื้อของคุณ</p>
@@ -542,7 +547,7 @@ export default function Home() {
 
       {/* About Section */}
       <section id="about" className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-5xl font-bold text-gray-900 mb-6">243 ปี แห่งประวัติศาสตร์</h2>
           <p className="text-xl text-gray-700 leading-relaxed mb-8">
             เสื้อเฉลิมฉลองครบรอบ 243 ปี ออกแบบขึ้นเพื่อเฉลิมฉลองความยิ่งใหญ่และประวัติศาสตร์อันยาวนาน
@@ -555,9 +560,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Contact Section */}
+      {/* (10) Section ใหม่ (จาก Future/login) */}
       <section id="contact" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
+         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-12 text-center">
             <h2 className="text-5xl font-bold text-gray-900 mb-4">ติดต่อเรา</h2>
             <p className="text-xl text-gray-600">มีคำถามหรือต้องการความช่วยเหลือ?</p>
@@ -628,7 +633,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-6">
+         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <h4 className="font-bold mb-4 text-lg">ช้อปปิ้ง</h4>
