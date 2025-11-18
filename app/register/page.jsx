@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -16,16 +16,19 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState('');
 
   const handleRegister = async () => {
+    // ตรวจสอบว่ากรอกข้อมูลครบ
     if (!fullName || !email || !phone || !password || !confirmPassword) {
       setError('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
 
+    // ตรวจสอบว่ารหัสผ่านตรงกัน
     if (password !== confirmPassword) {
       setError('รหัสผ่านไม่ตรงกัน');
       return;
     }
 
+    // ตรวจสอบความยาวรหัสผ่าน
     if (password.length < 6) {
       setError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
       return;
@@ -57,13 +60,33 @@ export default function RegisterPage() {
       }
 
       if (data.success) {
+        // เก็บข้อมูลการสมัครสำเร็จไว้ใน sessionStorage
+        const userRegistrationData = {
+          fullName,
+          email,
+          phone,
+          registeredAt: new Date().toISOString(),
+        };
+        
+        try {
+          sessionStorage.setItem('lastRegistration', JSON.stringify(userRegistrationData));
+        } catch (e) {
+          console.log('ไม่สามารถเก็บข้อมูลใน sessionStorage');
+        }
+
+        // เก็บข้อมูลใน object เพื่อส่งไปหน้าล็อคอิน
+        window.userRegistrationData = userRegistrationData;
+
         setSuccess('สมัครสมาชิกสำเร็จ! กำลังเปลี่ยนหน้า...');
+        
+        // เด้งไปหน้าล็อคอินหลังจาก 1.5 วินาที
         setTimeout(() => {
           window.location.href = '/login';
-        }, 2000);
+        }, 1500);
       }
     } catch (err) {
       setError('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง');
+      console.error('Error:', err);
     } finally {
       setLoading(false);
     }
@@ -103,14 +126,16 @@ export default function RegisterPage() {
 
         {/* Success Message */}
         {success && (
-          <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm">
+          <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
             {success}
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+          <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2">
+            <div className="w-2 h-2 bg-red-600 rounded-full"></div>
             {error}
           </div>
         )}
@@ -126,7 +151,8 @@ export default function RegisterPage() {
               placeholder="กรอกชื่อ-นามสกุล"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition"
+              disabled={loading}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition disabled:bg-gray-100"
             />
           </div>
 
@@ -140,7 +166,8 @@ export default function RegisterPage() {
               placeholder="กรอกอีเมล"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition"
+              disabled={loading}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition disabled:bg-gray-100"
             />
           </div>
 
@@ -154,7 +181,8 @@ export default function RegisterPage() {
               placeholder="กรอกเบอร์โทรศัพท์"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition"
+              disabled={loading}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition disabled:bg-gray-100"
             />
           </div>
 
@@ -169,12 +197,14 @@ export default function RegisterPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition pr-12"
+                disabled={loading}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition pr-12 disabled:bg-gray-100"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                disabled={loading}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
               >
                 {showPassword ? (
                   <EyeOff size={20} />
@@ -197,12 +227,14 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition pr-12"
+                disabled={loading}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition pr-12 disabled:bg-gray-100"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                disabled={loading}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
               >
                 {showConfirmPassword ? (
                   <EyeOff size={20} />
