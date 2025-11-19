@@ -395,48 +395,11 @@ export default function Home() {
                     </ul>
                   </div>
                   
-                  {/* Color Selection */}
-                  <div className="mb-4">
-                    <h3 className="font-bold text-gray-900 mb-2 text-xs">เลือกสี</h3>
-                    <div className="flex gap-2">
-                      {colors.map((color) => (
-                        <button
-                          key={color.name}
-                          onClick={() => setSelectedColor(color.name)}
-                          className={`w-8 h-8 rounded-full transition ${
-                            selectedColor === color.name ? 'ring-4 ring-blue-600 ring-offset-2 scale-110' : 'ring-2 ring-gray-300'
-                          }`}
-                          style={{ backgroundColor: color.hex }}
-                          title={color.label}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Size Selection */}
-                  <div className="mb-5">
-                    <h3 className="font-bold text-gray-900 mb-2 text-xs">เลือกไซส์</h3>
-                    <div className="grid grid-cols-5 gap-2">
-                      {sizes.map((size) => (
-                        <button
-                          key={size}
-                          onClick={() => setSelectedSize(size)}
-                          className={`py-2 rounded-lg font-semibold text-xs transition ${
-                            selectedSize === size 
-                              ? 'bg-blue-600 text-white shadow-lg' 
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
+              
                   {/* Add to Cart */}
-                  <button className="w-full bg-blue-600 text-white py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition transform hover:scale-[1.02] shadow-lg mt-auto">
+                  
                     เพิ่มลงตะกร้า - ฿{products.find(p => p.id === selectedProduct)?.price}
-                  </button>
+               
                 </div>
               </div>
             </div>
