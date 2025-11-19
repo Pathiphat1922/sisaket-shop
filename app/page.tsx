@@ -477,7 +477,7 @@ export default function Home() {
                     className="w-full bg-blue-600 text-white py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition transform hover:scale-[1.02] shadow-lg mt-auto"
                   >
                     เพิ่มลงตะกร้า - ฿{products.find(p => p.id === selectedProduct)?.price}
-               
+                  </button>
                 </div>
               </div>
             </div>
