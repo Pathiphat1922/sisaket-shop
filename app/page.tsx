@@ -8,8 +8,8 @@ import { useSession, signOut } from 'next-auth/react';
 // 🔒 กำหนดรายชื่อ Admin (สำหรับโชว์ปุ่ม Dashboard)
 // ==================================================
 const ADMIN_EMAILS = [
-  "test@example.com",           
-  "test@example.com",       // <--- อย่าลืมแก้อีเมลตรงนี้ให้ตรงกับของคุณ
+  "test@example.com",          
+  "your.email@gmail.com" // <--- 🟡 แก้เป็นอีเมลของคุณที่ใช้ Login
 ];
 
 // Type สำหรับสินค้าในตะกร้า
@@ -73,6 +73,7 @@ export default function Home() {
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.email) {
       const allHistory = JSON.parse(localStorage.getItem("all_orders_history") || "[]");
+      // กรองเฉพาะออเดอร์ของ user ที่ login อยู่
       const userOrders = allHistory.filter((order: OrderType) => order.email === session.user?.email);
       setMyOrders(userOrders);
     }
@@ -110,20 +111,9 @@ export default function Home() {
       alert("เกิดข้อผิดพลาด: ไม่พบสินค้า");
       return;
     }
-    const newItem: CartItem = {
-      type: `${product.name} (สี: ${selectedColor})`, 
-      size: selectedSize,
-      quantity: 1 
-    };
-    const savedCart = localStorage.getItem("cart_items");
-    const existingCart: CartItem[] = savedCart ? JSON.parse(savedCart) : [];
-    const updatedCart = [...existingCart, newItem];
     
-    if (typeof window !== "undefined") {
-        localStorage.setItem("cart_items", JSON.stringify(updatedCart));
-    }
-    alert("เพิ่มสินค้าลงตะกร้าแล้ว!");
-    router.push("/review");
+    // ไปหน้าสั่งซื้อ (ProductPage) แทนการ Add ลงตะกร้าตรงนี้ เพื่อให้ Flow เหมือนกัน
+    router.push("/order");
   };
 
   // --- Data Arrays ---
@@ -201,7 +191,7 @@ export default function Home() {
           <div className="hidden md:flex gap-8 text-sm font-medium text-gray-700">
             <a href="#hero" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'hero')}>หน้าแรก</a>
             <a href="#products" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'products')}>สินค้า</a>
-            <a href="/store" className="hover:text-gray-900 transition cursor-pointer">รายการสั่งซื้อ</a>
+            {/* <a href="/store" className="hover:text-gray-900 transition cursor-pointer">รายการสั่งซื้อ</a> */}
             <a href="#orders" className="hover:text-gray-900 transition cursor-pointer" onClick={(e) => smoothScroll(e, 'orders')}>คำสั่งซื้อของฉัน</a>
             
           </div>
@@ -211,29 +201,29 @@ export default function Home() {
               onClick={() => router.push('/order')}
               className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition"
             >
-              ซื้อเลย
+              สั่งซื้อเลย
             </button>
 
-            {/* 🟢 ปุ่ม Admin/Dashboard */}
+            {/* 🟢 ปุ่ม Admin/Dashboard (โชว์เฉพาะ Admin) */}
             {isAdmin && (
               <button 
                 onClick={() => router.push('/dashboard')}
-                className="bg-gray-800 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-black transition flex items-center gap-2 shadow-md"
+                className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-black transition flex items-center gap-2 shadow-md border border-gray-700"
               >
-                {/* Dashboard Icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                 {/* Dashboard Icon */}
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="7" height="7"></rect>
                   <rect x="14" y="3" width="7" height="7"></rect>
                   <rect x="14" y="14" width="7" height="7"></rect>
                   <rect x="3" y="14" width="7" height="7"></rect>
                 </svg>
-                Dashboard
+                ระบบหลังบ้าน
               </button>
             )}
 
             <button 
               onClick={() => signOut()} 
-              className="bg-red-500 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-red-600 transition"
+              className="bg-red-50 text-red-600 border border-red-100 px-4 py-2 rounded-full text-sm font-medium hover:bg-red-100 transition"
             >
               ออกจากระบบ
             </button>
@@ -250,9 +240,6 @@ export default function Home() {
           }}
         />
         <div className="relative z-10 text-center px-6 max-w-5xl">
-          <div className="mb-6 inline-block">
-             
-          </div>
           <h1 
             className="text-6xl md:text-8xl font-bold mb-6 tracking-tight bg-gradient-to-r from-gray-900 via-blue-800 to-purple-900 bg-clip-text text-transparent leading-tight"
             style={{
@@ -289,9 +276,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* =============================================== */}
-      {/* 🟡 Products Section (จัดกึ่งกลางหน้าจอ)        */}
-      {/* =============================================== */}
+      {/* Products Section */}
       <section id="products" className="min-h-screen flex items-center justify-center py-20 bg-gray-100">
         <div className="max-w-7xl mx-auto px-6 w-full">
           <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
@@ -378,7 +363,7 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto">
               <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
                 <div className="flex flex-col items-center">
                   <div className="bg-white border-2 border-gray-200 rounded-2xl w-64 h-64 flex items-center justify-center p-6 mb-3">
@@ -408,12 +393,6 @@ export default function Home() {
                 </div>
                 
                 <div className="flex flex-col">
-                  {products.find(p => p.id === selectedProduct)?.badge && (
-                    <span className="text-orange-600 text-xs font-semibold mb-2">
-                      {products.find(p => p.id === selectedProduct)?.badge}
-                    </span>
-                  )}
-                  
                   <p className="text-2xl font-bold text-gray-900 mb-3">
                     ฿{products.find(p => p.id === selectedProduct)?.price}
                   </p>
@@ -422,62 +401,27 @@ export default function Home() {
                     {products.find(p => p.id === selectedProduct)?.description}
                   </p>
                   
+                  {/* รายละเอียดอื่นๆ แสดงเฉยๆ แต่เวลากดซื้อ ให้ไปหน้า Order หลัก */}
                   <div className="mb-5">
-                    <h3 className="font-bold text-gray-900 mb-2 text-sm">คุณสมบัติเด่น</h3>
-                    <ul className="space-y-1.5">
-                      {products.find(p => p.id === selectedProduct)?.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-gray-700 text-xs">
-                          <svg className="w-3.5 h-3.5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <h3 className="font-bold text-gray-900 mb-2 text-xs">เลือกสี</h3>
-                    <div className="flex gap-2">
-                      {colors.map((color) => (
-                        <button
-                          key={color.name}
-                          onClick={() => setSelectedColor(color.name)}
-                          className={`w-8 h-8 rounded-full transition ${
-                            selectedColor === color.name ? 'ring-4 ring-blue-600 ring-offset-2 scale-110' : 'ring-2 ring-gray-300'
-                          }`}
-                          style={{ backgroundColor: color.hex }}
-                          title={color.label}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="mb-5">
-                    <h3 className="font-bold text-gray-900 mb-2 text-xs">เลือกไซส์</h3>
-                    <div className="grid grid-cols-5 gap-2">
-                      {sizes.map((size) => (
-                        <button
-                          key={size}
-                          onClick={() => setSelectedSize(size)}
-                          className={`py-2 rounded-lg font-semibold text-xs transition ${
-                            selectedSize === size 
-                              ? 'bg-blue-600 text-white shadow-lg' 
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
+                     <h3 className="font-bold text-gray-900 mb-2 text-sm">คุณสมบัติเด่น</h3>
+                     <ul className="space-y-1.5">
+                       {products.find(p => p.id === selectedProduct)?.features.map((feature, idx) => (
+                         <li key={idx} className="flex items-center gap-2 text-gray-700 text-xs">
+                           <svg className="w-3.5 h-3.5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                           </svg>
+                           {feature}
+                         </li>
+                       ))}
+                     </ul>
                   </div>
                   
                   <button 
                     onClick={handleAddToCart}
                     className="w-full bg-blue-600 text-white py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition transform hover:scale-[1.02] shadow-lg mt-auto"
                   >
-                    เพิ่มลงตะกร้า - ฿{products.find(p => p.id === selectedProduct)?.price}
-               
+                    ไปหน้าสั่งซื้อสินค้า
+                  </button>
                 </div>
               </div>
             </div>
@@ -495,7 +439,7 @@ export default function Home() {
           
           <div className="bg-white rounded-2xl shadow-md overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[600px]">
                 <thead className="bg-gray-100 border-b">
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">เลขที่คำสั่ง</th>
@@ -509,24 +453,30 @@ export default function Home() {
                   {myOrders.length > 0 ? (
                     myOrders.map((order, index) => (
                       <tr key={index} className="border-b hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 text-sm font-medium text-blue-600">{order.id}</td>
-                        <td className="px-6 py-4 text-sm text-gray-700">{order.product}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-blue-600">
+                            {order.id}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                             {/* ถ้ามี product ให้โชว์ ถ้าไม่มี (รุ่นใหม่ใช้ items) ให้โชว์ว่า หลายรายการ */}
+                            {order.product || "สินค้าคละรายการ"}
+                        </td>
                         <td className="px-6 py-4 text-sm text-gray-600">{order.date}</td>
                         <td className="px-6 py-4 text-sm">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            order.status.includes('จัดส่ง') ? 'bg-green-100 text-green-800' :
-                            order.status.includes('กำลัง') ? 'bg-blue-100 text-blue-800' :
-                            'bg-yellow-100 text-yellow-800'
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                            order.status.includes('จัดส่ง') ? 'bg-green-50 text-green-700 border-green-200' :
+                            order.status.includes('กำลัง') || order.status.includes('เตรียม') ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                            order.status.includes('ยกเลิก') ? 'bg-red-50 text-red-700 border-red-200' :
+                            'bg-yellow-50 text-yellow-700 border-yellow-200'
                           }`}>
                             {order.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm font-semibold text-gray-900">฿{Number(order.amount).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-sm font-bold text-gray-900">฿{Number(order.amount).toLocaleString()}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
                         ยังไม่มีรายการสั่งซื้อ
                       </td>
                     </tr>
@@ -546,10 +496,6 @@ export default function Home() {
             เสื้อเฉลิมฉลองครบรอบ 243 ปี ออกแบบขึ้นเพื่อเฉลิมฉลองความยิ่งใหญ่และประวัติศาสตร์อันยาวนาน
             ของเมืองเรา ด้วยดีไซน์ที่ผสมผสานความทันสมัยเข้ากับมรดกทางวัฒนธรรม
           </p>
-          <p className="text-xl text-gray-700 leading-relaxed">
-            ทุกตัวเสื้อถูกผลิตด้วยคุณภาพสูงสุด เพื่อให้คุณสามารถสวมใส่ได้อย่างภาคภูมิใจ
-            และเก็บไว้เป็นที่ระลึกตลอดไป
-          </p>
         </div>
       </section>
 
@@ -558,68 +504,21 @@ export default function Home() {
          <div className="max-w-7xl mx-auto px-6">
           <div className="mb-12 text-center">
             <h2 className="text-5xl font-bold text-gray-900 mb-4">ติดต่อเรา</h2>
-            <p className="text-xl text-gray-600">มีคำถามหรือต้องการความช่วยเหลือ?</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Phone */}
             <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition text-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-              </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">โทรศัพท์</h3>
-              <p className="text-gray-600 text-lg">+66 (0) XX-XXX-XXXX</p>
-              <p className="text-sm text-gray-500 mt-2">วันจันทร์ - วันศุกร์ 09:00 - 18:00</p>
+              <p className="text-gray-600 text-lg">0XX-XXX-XXXX</p>
             </div>
-
-            {/* Email */}
             <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition text-center">
-              <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">อีเมล</h3>
               <p className="text-gray-600 text-lg">info@city243.com</p>
-              <p className="text-sm text-gray-500 mt-2">ตอบกลับภายใน 24 ชั่วโมง</p>
             </div>
-
-            {/* Location */}
             <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition text-center">
-              <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">สถานที่</h3>
-              <p className="text-gray-600 text-lg">เมืองเรา</p>
-              <p className="text-sm text-gray-500 mt-2">เมืองหลัก</p>
+              <p className="text-gray-600 text-lg">ศาลากลางจังหวัด</p>
             </div>
-          </div>
-
-          {/* Contact Form */}
-          <div className="max-w-2xl mx-auto mt-12 bg-white rounded-2xl p-8 shadow-md">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">ส่งข้อความให้เรา</h3>
-            <form className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">ชื่อ</label>
-                <input type="text" placeholder="ชื่อของคุณ" className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 transition" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">อีเมล</label>
-                <input type="email" placeholder="อีเมลของคุณ" className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 transition" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">ข้อความ</label>
-                <textarea placeholder="ข้อความของคุณ" rows={5} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 transition resize-none"></textarea>
-              </div>
-              <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-full text-sm font-bold hover:bg-blue-700 transition transform hover:scale-[1.02] shadow-lg">
-                ส่งข้อความ
-              </button>
-            </form>
           </div>
         </div>
       </section>
@@ -627,46 +526,6 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
          <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h4 className="font-bold mb-4 text-lg">ช้อปปิ้ง</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#products" className="hover:text-white transition">สินค้าทั้งหมด</a></li>
-                <li><a href="#products" className="hover:text-white transition">สินค้าใหม่</a></li>
-                <li><a href="#products" className="hover:text-white transition">สินค้าขายดี</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4 text-lg">บริการ</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#contact" className="hover:text-white transition">ติดตามสินค้า</a></li>
-                <li><a href="#contact" className="hover:text-white transition">นโยบายการคืนสินค้า</a></li>
-                <li><a href="#contact" className="hover:text-white transition">การจัดส่ง</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4 text-lg">เกี่ยวกับเรา</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#about" className="hover:text-white transition">เรื่องราวของเรา</a></li>
-                <li><a href="#contact" className="hover:text-white transition">ติดต่อเรา</a></li>
-                <li><a href="#" className="hover:text-white transition">ร่วมงานกับเรา</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4 text-lg">ติดตามเรา</h4>
-              <div className="flex gap-3">
-                <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition">
-                  <span className="text-sm font-bold">f</span>
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition">
-                  <span className="text-sm font-bold">ig</span>
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition">
-                  <span className="text-sm font-bold">tw</span>
-                </a>
-              </div>
-            </div>
-          </div>
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
             <p>&copy; 2024 เสื้อเฉลิมฉลองเมือง 243 ปี สงวนลิขสิทธิ์.</p>
           </div>
