@@ -9,7 +9,7 @@ import { useSession, signOut } from 'next-auth/react';
 // ==================================================
 const ADMIN_EMAILS = [
   "test@example.com",          
-  "test@example.com" // <--- 🟡 แก้เป็นอีเมลของคุณที่ใช้ Login
+  "your-email@example.com" // <--- 🟡 อย่าลืมแก้เป็นอีเมลของคุณที่ใช้ Login
 ];
 
 // Type สำหรับสินค้าในตะกร้า
@@ -69,10 +69,15 @@ export default function Home() {
   // 3. ดึงข้อมูลออเดอร์จริงจาก LocalStorage
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.email) {
-      const allHistory = JSON.parse(localStorage.getItem("all_orders_history") || "[]");
-      // กรองเฉพาะออเดอร์ของ user ที่ login อยู่
-      const userOrders = allHistory.filter((order: OrderType) => order.email === session.user?.email);
-      setMyOrders(userOrders);
+      try {
+        const allHistory = JSON.parse(localStorage.getItem("all_orders_history") || "[]");
+        // กรองเฉพาะออเดอร์ของ user ที่ login อยู่
+        const userOrders = allHistory.filter((order: OrderType) => order.email === session.user?.email);
+        setMyOrders(userOrders);
+      } catch (error) {
+        console.error("Failed to parse orders history", error);
+        setMyOrders([]);
+      }
     }
   }, [status, session]);
 
@@ -100,12 +105,12 @@ export default function Home() {
 
   const handleAddToCart = () => {
     if (selectedProduct === null) {
-      alert("เกิดข้อผิดพลาด: ไม่ได้เลือกสินค้า");
+      console.error("เกิดข้อผิดพลาด: ไม่ได้เลือกสินค้า");
       return;
     }
     const product = products.find(p => p.id === selectedProduct);
     if (!product) {
-      alert("เกิดข้อผิดพลาด: ไม่พบสินค้า");
+      console.error("เกิดข้อผิดพลาด: ไม่พบสินค้า");
       return;
     }
     
@@ -129,7 +134,7 @@ export default function Home() {
       name: 'เสื้อแบบสี',
       price: '198',
       badge: 'ใหม่',
-      image: '/images/goal.PNG', // ตรวจสอบ path รูปภาพให้ถูกต้อง (images หรือ image)
+      image: '/images/goal.PNG', // ตรวจสอบ path รูปภาพให้ถูกต้อง
       images: ['/images/goal.PNG', '/images/goal1.PNG'],
       colors: ['ขาว', 'ดำ', 'กรมท่า'],
       description: 'ออกแบบพิเศษเฉพาะวาระครบรอบ 243 ปี ด้วยผ้าคอตตอนคุณภาพพรีเมียม ระบายอากาศได้ดี สวมใส่สบาย',
@@ -295,6 +300,9 @@ export default function Home() {
                       src={product.image} 
                       alt={product.name}
                       className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://placehold.co/400x400/png?text=No+Image';
+                      }}
                     />
                   </div>
                   <div className="p-5">
@@ -355,6 +363,9 @@ export default function Home() {
                       src={products.find(p => p.id === selectedProduct)?.images?.[selectedImage]} 
                       alt={products.find(p => p.id === selectedProduct)?.name}
                       className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://placehold.co/400x400/png?text=No+Image';
+                      }}
                     />
                   </div>
                   <div className="grid grid-cols-4 gap-2 w-64">
@@ -370,6 +381,9 @@ export default function Home() {
                           src={img} 
                           alt={`${products.find(p => p.id === selectedProduct)?.name} ${index + 1}`}
                           className="w-full h-full object-contain p-1"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/png?text=No+Image';
+                          }}
                         />
                       </div>
                     ))}
